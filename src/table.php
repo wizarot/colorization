@@ -118,11 +118,13 @@ class BashColor
         } else {
             $str = array();
             $render_str = array();
+//            $render_str1 = array();
 
             foreach ( $matches[ 'attributes' ] as $key => $attributes ) {
                 list( $foreground, $background, $option, $endModifier ) = BashColor::parseAttributes( $attributes );
                 $str[] = $matches[ 'string' ][ $key ];
-                $render_str[] = "\033[{$option};{$background};{$foreground}m{$matches['string'][$key]}\033[{$endModifier}m";
+                $render_str[] = "\033[{$option};{$background};{$foreground}m{$matches['string'][$key]}\033[0m";
+//                $render_str[] = "\033[{$option};{$background};{$foreground}m{$matches['string'][$key]}\033[{$endModifier}m";
             }
         }
 
@@ -336,19 +338,24 @@ class BashColor
                     $col_buffer .= $td[ 'str' ] . str_repeat( ' ', mb_strlen( self::$TAB_SLICE ) );
                 } elseif ( $td[ 'type' ] == 'br' ) {//处理分隔行
                     $pad_longth = array_sum( self::$row_with ) + mb_strlen( self::$TAB_SLICE ) * count( self::$row_with ) - 1;//饿了,为啥多一个?暂时想不明白
-                    $str .= str_pad( '', $pad_longth, $td[ 'str' ] );
+                    $str .= str_pad( '', $pad_longth, $td[ 'str' ] );//这类先不管
                 } elseif ( !empty( $col_buffer ) ) {// 处理合并单元格
                     $length = mb_strlen( $col_buffer ) + mb_strlen( $td[ 'str' ] );
-                    $str .= ( str_pad( $td[ 'str' ], $length, ' ', $td[ 'align' ] ) . self::$TAB_SLICE );
+                    $render_str = ( str_pad( $td[ 'str' ], $length, ' ', $td[ 'align' ] ) . self::$TAB_SLICE );
+                    $render_str = str_replace( trim($td['str']) ,$td['render_str'] ,$render_str);
+                    $str .= $render_str;
                     $col_buffer = '';//用完就清空
                 } else {//普通单元格
-                    $str .= $td[ 'str' ] . self::$TAB_SLICE;
+                    $render_str = $td[ 'str' ] . self::$TAB_SLICE;
+                    $render_str = str_replace( trim($td['str']) ,$td['render_str'] ,$render_str);
+                    $str .= $render_str;
                 }
             }
 
             $str .= "\n";
         }
 
+//        var_dump(self::$table);
         return $str;
     }
 }
@@ -357,8 +364,8 @@ BashColor::render( '<fg=green;opt=bold>Are you sure ?</><fg=yellow> [Y/n]:</>' )
 //var_dump(BashColor::render( 'haha' ,'array')) ;
 
 echo BashColor::table()->setSlice( ' | ' )->br( '+' )
-    ->td4( 'title', 'center' )->br( '=' )
+    ->td4( '<fg=lightBlue;bg=red>title</>', 'center' )->br( '=' )
     ->td( 'row1' )->td2( 'Centertitle', 'center' )->td( 'kjdfkajdksfjklde' )->br( '-' )
     ->td( 'rewwwwww' )->td( 'chinese', 'center' )->td( 'Hello World' )->td( '' )->br( '-' )
-    ->td( 'a' )->td( 'b', 'center' )->td( 'c' )->td( 'd' )->br( '-' )
+    ->td( 'a' )->td( '<fg=green;opt=bold>b</>', 'center' )->td( 'c' )->td( 'd' )->br( '-' )
     ->td3( 'b3', 'center' )->td( 'c' )->br( '+' );
